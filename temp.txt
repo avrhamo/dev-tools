@@ -1,336 +1,52 @@
-mkdir -p src/{main,preload,renderer}
-mkdir -p src/renderer/{components,tools,services,utils}
-mkdir -p src/renderer/components/{Layout,common}
-mkdir -p src/renderer/tools/{base64,rsa,json-yaml,api-tester}
-touch src/main.js
-touch src/preload.js
-touch src/renderer/App.jsx
-touch src/renderer/index.jsx
-touch src/renderer/components/Layout/Sidebar.jsx
-touch src/renderer/components/Layout/TopBar.jsx
-touch src/renderer/components/common/{Button,Input,Card}.jsx
-touch src/renderer/tools/base64/{index,Base64Tool}.jsx
-touch src/renderer/tools/rsa/{index,RsaTool}.jsx
-touch src/renderer/tools/json-yaml/{index,JsonYamlTool}.jsx
-touch src/renderer/tools/api-tester/{index,ApiTester}.jsx
-touch src/renderer/services/{storage,toolRegistry}.js
-touch src/renderer/utils/{encryption,conversion}.js
-touch package.json
-touch electron-builder.json
-[
-  {
-    "_id": "677e2f8dfa74a74ba05209bd",
-    "index": 0,
-    "guid": "09290c85-4d8b-4e15-a124-2a29f9cff125",
-    "isActive": false,
-    "balance": "$2,343.76",
-    "picture": "http://placehold.it/32x32",
-    "age": 25,
-    "eyeColor": "blue",
-    "name": "Holman Roberts",
-    "gender": "male",
-    "company": "TURNLING",
-    "email": "holmanroberts@turnling.com",
-    "phone": "+1 (933) 449-3951",
-    "address": "753 Howard Place, Klondike, North Carolina, 1980",
-    "about": "Laborum ipsum consectetur fugiat nulla anim labore laboris proident do non. Occaecat in ipsum duis veniam excepteur nostrud qui sit ipsum aliquip. Et aute laborum ullamco Lorem proident aliqua sint.\r\n",
-    "registered": "2020-06-08T09:47:26 -03:00",
-    "latitude": -51.008592,
-    "longitude": 179.243032,
-    "tags": [
-      "reprehenderit",
-      "dolore",
-      "veniam",
-      "sit",
-      "fugiat",
-      "mollit",
-      "ipsum"
-    ],
-    "friends": [
-      {
-        "id": 0,
-        "name": "Rowland Shields"
-      },
-      {
-        "id": 1,
-        "name": "Cochran Reynolds"
-      },
-      {
-        "id": 2,
-        "name": "Pittman Figueroa"
-      }
-    ],
-    "greeting": "Hello, Holman Roberts! You have 4 unread messages.",
-    "favoriteFruit": "strawberry"
-  },
-  {
-    "_id": "677e2f8d4e75ce781ac61a25",
-    "index": 1,
-    "guid": "ac25e4ed-16ed-4932-8697-d6fb3f32c3c7",
-    "isActive": true,
-    "balance": "$2,989.38",
-    "picture": "http://placehold.it/32x32",
-    "age": 27,
-    "eyeColor": "brown",
-    "name": "Clare Winters",
-    "gender": "female",
-    "company": "SCENTRIC",
-    "email": "clarewinters@scentric.com",
-    "phone": "+1 (923) 551-2584",
-    "address": "738 Manor Court, Summerset, Alaska, 1773",
-    "about": "Aliqua culpa do eiusmod quis quis incididunt ea incididunt id ipsum Lorem. Incididunt nulla ut velit proident velit aliqua laboris est. Pariatur fugiat quis deserunt consectetur ut irure sunt amet adipisicing do. Eu ut ut nisi enim labore nisi do non commodo Lorem adipisicing. Consectetur officia sint et cillum veniam dolore irure velit qui adipisicing ullamco. Consectetur cupidatat cupidatat exercitation voluptate ut in fugiat nulla.\r\n",
-    "registered": "2016-07-19T07:02:44 -03:00",
-    "latitude": 35.597274,
-    "longitude": 119.258539,
-    "tags": [
-      "voluptate",
-      "id",
-      "exercitation",
-      "consectetur",
-      "ad",
-      "nulla",
-      "reprehenderit"
-    ],
-    "friends": [
-      {
-        "id": 0,
-        "name": "Newton Tyson"
-      },
-      {
-        "id": 1,
-        "name": "Wolf Alvarado"
-      },
-      {
-        "id": 2,
-        "name": "Britt Hood"
-      }
-    ],
-    "greeting": "Hello, Clare Winters! You have 4 unread messages.",
-    "favoriteFruit": "apple"
-  },
-  {
-    "_id": "677e2f8d45e5ad04ae865eca",
-    "index": 2,
-    "guid": "c5c0ebf7-9c5e-47ac-9320-1939b22e2469",
-    "isActive": false,
-    "balance": "$3,821.66",
-    "picture": "http://placehold.it/32x32",
-    "age": 40,
-    "eyeColor": "green",
-    "name": "Diaz Camacho",
-    "gender": "male",
-    "company": "KEEG",
-    "email": "diazcamacho@keeg.com",
-    "phone": "+1 (985) 409-2833",
-    "address": "390 Bridge Street, Albrightsville, Montana, 3643",
-    "about": "Pariatur nisi non excepteur esse pariatur laborum Lorem enim sint sit magna. Ut irure ea mollit voluptate laborum fugiat sint dolore eu. Cillum nostrud proident veniam ex. Id sint culpa esse incididunt eu fugiat pariatur. In est in culpa sunt irure commodo sint nostrud ullamco magna do cupidatat irure.\r\n",
-    "registered": "2017-11-17T10:23:47 -02:00",
-    "latitude": -45.14894,
-    "longitude": 121.806952,
-    "tags": [
-      "culpa",
-      "elit",
-      "culpa",
-      "esse",
-      "est",
-      "dolor",
-      "excepteur"
-    ],
-    "friends": [
-      {
-        "id": 0,
-        "name": "Sofia Dunn"
-      },
-      {
-        "id": 1,
-        "name": "Sullivan Harrington"
-      },
-      {
-        "id": 2,
-        "name": "Sheryl Spears"
-      }
-    ],
-    "greeting": "Hello, Diaz Camacho! You have 2 unread messages.",
-    "favoriteFruit": "apple"
-  },
-  {
-    "_id": "677e2f8dbd8d6315a44d6ea6",
-    "index": 3,
-    "guid": "55cdb7ec-a5ae-4365-99f0-6395d73df5c4",
-    "isActive": false,
-    "balance": "$2,330.44",
-    "picture": "http://placehold.it/32x32",
-    "age": 40,
-    "eyeColor": "green",
-    "name": "Maxwell Ward",
-    "gender": "male",
-    "company": "SNOWPOKE",
-    "email": "maxwellward@snowpoke.com",
-    "phone": "+1 (817) 451-2430",
-    "address": "798 Sullivan Place, Sharon, Utah, 7232",
-    "about": "Est amet culpa dolor sunt aute fugiat. Non labore quis est occaecat commodo fugiat deserunt sunt nulla mollit. Nulla adipisicing et ad ad qui ullamco pariatur veniam velit anim aliqua exercitation. Velit labore ad duis anim elit do pariatur elit ullamco culpa exercitation. Eu incididunt ad aute ut fugiat labore magna amet ea nostrud laboris. Et excepteur officia sunt incididunt ullamco non. Anim sunt qui aliqua consequat officia.\r\n",
-    "registered": "2014-07-13T04:46:34 -03:00",
-    "latitude": 2.440752,
-    "longitude": 171.877433,
-    "tags": [
-      "enim",
-      "ullamco",
-      "do",
-      "minim",
-      "Lorem",
-      "eu",
-      "cillum"
-    ],
-    "friends": [
-      {
-        "id": 0,
-        "name": "Sanford Gallagher"
-      },
-      {
-        "id": 1,
-        "name": "Rivas Meyer"
-      },
-      {
-        "id": 2,
-        "name": "Carr Morin"
-      }
-    ],
-    "greeting": "Hello, Maxwell Ward! You have 9 unread messages.",
-    "favoriteFruit": "banana"
-  },
-  {
-    "_id": "677e2f8dff6d2c6d9a2faccd",
-    "index": 4,
-    "guid": "1cc96e42-5765-4e02-b040-62d03f3827be",
-    "isActive": false,
-    "balance": "$2,059.72",
-    "picture": "http://placehold.it/32x32",
-    "age": 38,
-    "eyeColor": "green",
-    "name": "Shaffer Spencer",
-    "gender": "male",
-    "company": "FIBEROX",
-    "email": "shafferspencer@fiberox.com",
-    "phone": "+1 (947) 431-3031",
-    "address": "440 Albany Avenue, Cumminsville, Missouri, 9363",
-    "about": "Proident Lorem culpa velit est aute ex laborum irure. Anim dolore quis voluptate sit do velit id laboris excepteur veniam culpa amet. Pariatur sit ad occaecat cupidatat proident.\r\n",
-    "registered": "2015-03-30T12:45:20 -03:00",
-    "latitude": 58.966563,
-    "longitude": -133.387203,
-    "tags": [
-      "nostrud",
-      "aliquip",
-      "non",
-      "laboris",
-      "consequat",
-      "officia",
-      "cupidatat"
-    ],
-    "friends": [
-      {
-        "id": 0,
-        "name": "Kara Wise"
-      },
-      {
-        "id": 1,
-        "name": "Roberts Coleman"
-      },
-      {
-        "id": 2,
-        "name": "Bass Whitaker"
-      }
-    ],
-    "greeting": "Hello, Shaffer Spencer! You have 7 unread messages.",
-    "favoriteFruit": "banana"
-  },
-  {
-    "_id": "677e2f8df8cf73e8ec2a6a09",
-    "index": 5,
-    "guid": "923fa622-8cbb-4c73-9ac4-1afced5913eb",
-    "isActive": false,
-    "balance": "$1,638.64",
-    "picture": "http://placehold.it/32x32",
-    "age": 33,
-    "eyeColor": "green",
-    "name": "Winifred Talley",
-    "gender": "female",
-    "company": "FLOTONIC",
-    "email": "winifredtalley@flotonic.com",
-    "phone": "+1 (849) 493-3751",
-    "address": "769 Wolf Place, Disautel, Hawaii, 782",
-    "about": "Ea in anim velit consectetur cupidatat Lorem dolore cupidatat fugiat amet. Ex anim ea cupidatat ad et dolore ad nisi Lorem id esse dolor labore dolore. Veniam anim commodo magna proident est irure dolore. Nisi cupidatat consectetur ex Lorem.\r\n",
-    "registered": "2016-02-13T05:23:16 -02:00",
-    "latitude": 0.274539,
-    "longitude": -100.779678,
-    "tags": [
-      "eiusmod",
-      "enim",
-      "sit",
-      "adipisicing",
-      "magna",
-      "adipisicing",
-      "nisi"
-    ],
-    "friends": [
-      {
-        "id": 0,
-        "name": "Lott Hatfield"
-      },
-      {
-        "id": 1,
-        "name": "Copeland Fletcher"
-      },
-      {
-        "id": 2,
-        "name": "Hobbs Rice"
-      }
-    ],
-    "greeting": "Hello, Winifred Talley! You have 2 unread messages.",
-    "favoriteFruit": "strawberry"
-  },
-  {
-    "_id": "677e2f8d86504f73edcb948e",
-    "index": 6,
-    "guid": "170b3fcc-edc6-4fac-ab2a-37b5299cf83d",
-    "isActive": false,
-    "balance": "$1,948.60",
-    "picture": "http://placehold.it/32x32",
-    "age": 27,
-    "eyeColor": "green",
-    "name": "Olive Joyce",
-    "gender": "female",
-    "company": "KAGGLE",
-    "email": "olivejoyce@kaggle.com",
-    "phone": "+1 (801) 523-2277",
-    "address": "707 Independence Avenue, Cliff, Colorado, 4717",
-    "about": "In aliquip laboris nisi ea qui enim ad minim ullamco laborum. Lorem aliqua et officia est deserunt qui in in laborum voluptate mollit adipisicing cupidatat ipsum. Aliquip voluptate nisi mollit in et culpa duis amet id eiusmod culpa id. Fugiat mollit sit id excepteur mollit laborum dolore adipisicing proident aliqua amet tempor aliquip. Cupidatat non incididunt laborum et incididunt excepteur magna. Eiusmod in tempor enim qui anim veniam magna aliqua.\r\n",
-    "registered": "2020-12-30T06:00:46 -02:00",
-    "latitude": -79.356231,
-    "longitude": -45.934356,
-    "tags": [
-      "enim",
-      "aute",
-      "in",
-      "velit",
-      "laboris",
-      "irure",
-      "ullamco"
-    ],
-    "friends": [
-      {
-        "id": 0,
-        "name": "Galloway David"
-      },
-      {
-        "id": 1,
-        "name": "Downs Vincent"
-      },
-      {
-        "id": 2,
-        "name": "Esther Jenkins"
-      }
-    ],
-    "greeting": "Hello, Olive Joyce! You have 10 unread messages.",
-    "favoriteFruit": "banana"
-  }
-]
+├── LICENSE
+├── electron-builder.json
+├── package-lock.json
+├── package.json
+├── postcss.config.js
+├── src
+│   ├── main
+│   ├── main.js
+│   ├── preload
+│   ├── preload.js
+│   └── renderer
+│       ├── App.jsx
+│       ├── components
+│       │   ├── Layout
+│       │   │   ├── Sidebar.jsx
+│       │   │   └── TopBar.jsx
+│       │   └── common
+│       │       ├── Button.jsx
+│       │       ├── Card.jsx
+│       │       ├── CodeEditor.jsx
+│       │       └── Input.jsx
+│       ├── index.css
+│       ├── index.html
+│       ├── index.jsx
+│       ├── services
+│       │   ├── storage.js
+│       │   └── toolRegistry.js
+│       ├── tools
+│       │   ├── api-tester
+│       │   │   ├── ApiTester.jsx
+│       │   │   ├── components
+│       │   │   │   ├── CurlInput.jsx
+│       │   │   │   ├── DatabaseConnection.jsx
+│       │   │   │   ├── FieldMapping.jsx
+│       │   │   │   └── TestExecution.jsx
+│       │   │   ├── index.jsx
+│       │   │   └── services
+│       │   ├── base64
+│       │   │   ├── Base64Tool.jsx
+│       │   │   └── index.jsx
+│       │   ├── json-yaml
+│       │   │   ├── JsonYamlTool.jsx
+│       │   │   └── index.jsx
+│       │   └── rsa
+│       │       ├── RsaTool.jsx
+│       │       └── index.jsx
+│       └── utils
+│           ├── conversion.js
+│           └── encryption.js
+├── tailwind.config.js
+├── temp.txt
+└── vite.config.js
