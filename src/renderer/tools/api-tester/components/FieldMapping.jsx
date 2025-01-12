@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import Button from '../../../components/common/Button';
 import CodeEditor from '../../../components/common/CodeEditor';
+import FieldTypeCasting from './FieldTypeCasting';
 
 const FieldMapping = ({ curlData, connection, onMappingComplete }) => {
     const [curlFields, setCurlFields] = useState([]);
     const [mongoFields, setMongoFields] = useState([]);
     const [mappings, setMappings] = useState({});
+    const [castings, setCastings] = useState({});
     const [error, setError] = useState('');
     const [preview, setPreview] = useState('');
     const [expandedHeaders, setExpandedHeaders] = useState({});
@@ -25,7 +27,7 @@ const FieldMapping = ({ curlData, connection, onMappingComplete }) => {
         };
     
         try {
-            const fields = new Set(); // Use Set to prevent duplicates
+            const fields = new Set();
     
             // Extract path parameters
             if (curlData.pathParams && curlData.pathParams.length > 0) {
@@ -50,13 +52,11 @@ const FieldMapping = ({ curlData, connection, onMappingComplete }) => {
             if (curlData.headers) {
                 Object.entries(curlData.headers).forEach(([headerKey, headerValue]) => {
                     if (curlData.encodedHeaders && curlData.encodedHeaders[headerKey]) {
-                        // Handle encoded headers - extract JSON structure
                         const headerFields = extractFields(curlData.encodedHeaders[headerKey].decoded);
                         headerFields.forEach(field => {
                             fields.add(`header.${headerKey}.${field}`);
                         });
                     } else {
-                        // Regular headers
                         fields.add(`header.${headerKey}`);
                     }
                 });
@@ -78,7 +78,6 @@ const FieldMapping = ({ curlData, connection, onMappingComplete }) => {
         }
     }, [curlData]);
 
-    // Extract fields from MongoDB sample document
     useEffect(() => {
         const extractFields = (obj, parentKey = '') => {
             let fields = [];
@@ -118,32 +117,49 @@ const FieldMapping = ({ curlData, connection, onMappingComplete }) => {
                 body: curlData.data ? JSON.parse(JSON.stringify(curlData.data)) : undefined
             };
 
-            // Add mapping indicators
+            // Add mapping indicators with type casting
             Object.entries(mappings).forEach(([curlField, mongoField]) => {
+                const castingConfig = castings[curlField];
+                const placeholder = castingConfig 
+                    ? `{${mongoField}:${castingConfig.type}${castingConfig.format ? `:${castingConfig.format}` : ''}}`
+                    : `{${mongoField}}`;
+
                 const [section, ...parts] = curlField.split('.');
                 const fieldPath = parts.join('.');
 
                 if (section === 'path') {
-                    // Handle path parameter mapping
                     const paramPattern = new RegExp(`[:\{\[]${fieldPath}[\}\]]?`);
-                    urlString = urlString.replace(paramPattern, `{${mongoField}}`);
+                    urlString = urlString.replace(paramPattern, placeholder);
                     previewData.url = urlString;
                 } else if (section === 'url') {
-                    // Handle URL parameter mapping
                     const url = new URL(previewData.url);
-                    url.searchParams.set(fieldPath, `{${mongoField}}`);
+                    url.searchParams.set(fieldPath, placeholder);
                     previewData.url = url.toString();
-                } else if (section === 'headers') {
-                    // Handle header mapping
-                    previewData.headers[fieldPath] = `{${mongoField}}`;
-                } else if (section === 'body') {
-                    // Handle body mapping
+                } else if (section === 'header') {
+                    const headerKey = parts[0];
+                    if (curlData.encodedHeaders && curlData.encodedHeaders[headerKey]) {
+                        // Handle encoded headers
+                        const headerData = { ...curlData.encodedHeaders[headerKey].decoded };
+                        let current = headerData;
+                        const remainingParts = parts.slice(1);
+                        remainingParts.forEach((part, index) => {
+                            if (index === remainingParts.length - 1) {
+                                current[part] = placeholder;
+                            } else {
+                                current = current[part];
+                            }
+                        });
+                        previewData.headers[headerKey] = btoa(JSON.stringify(headerData));
+                    } else {
+                        previewData.headers[fieldPath] = placeholder;
+                    }
+                } else if (section === 'body' && previewData.body) {
                     let current = previewData.body;
-                    const pathParts = fieldPath.split('.');
-                    pathParts.forEach((part, index) => {
-                        if (index === pathParts.length - 1) {
-                            current[part] = `{${mongoField}}`;
+                    parts.forEach((part, index) => {
+                        if (index === parts.length - 1) {
+                            current[part] = placeholder;
                         } else {
+                            if (!current[part]) current[part] = {};
                             current = current[part];
                         }
                     });
@@ -154,17 +170,37 @@ const FieldMapping = ({ curlData, connection, onMappingComplete }) => {
         } catch (err) {
             setError('Failed to generate preview: ' + err.message);
         }
-    }, [mappings, curlData]);
+    }, [mappings, castings, curlData]);
 
     const handleMapping = (curlField, mongoField) => {
         setMappings(prev => ({
             ...prev,
             [curlField]: mongoField
         }));
+        
+        // Reset casting when mapping changes
+        setCastings(prev => {
+            const newCastings = { ...prev };
+            delete newCastings[curlField];
+            return newCastings;
+        });
+    };
+
+    const handleCastingUpdate = (curlField, castingConfig) => {
+        setCastings(prev => ({
+            ...prev,
+            [curlField]: {
+                ...prev[curlField],
+                ...castingConfig
+            }
+        }));
     };
 
     const handleContinue = () => {
-        onMappingComplete(mappings);
+        onMappingComplete({
+            fieldMappings: mappings,
+            typeCastings: castings
+        });
     };
 
     return (
@@ -200,6 +236,13 @@ const FieldMapping = ({ curlData, connection, onMappingComplete }) => {
                             </div>
                         ))}
                     </div>
+
+                    {Object.keys(mappings).length > 0 && (
+                        <FieldTypeCasting 
+                            mappings={mappings}
+                            onUpdateCasting={handleCastingUpdate}
+                        />
+                    )}
                 </div>
 
                 <div className="space-y-2">

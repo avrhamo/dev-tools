@@ -50,3 +50,6 @@
 ├── tailwind.config.js
 ├── temp.txt
 └── vite.config.js
+
+mongodb://localhost:27017
+

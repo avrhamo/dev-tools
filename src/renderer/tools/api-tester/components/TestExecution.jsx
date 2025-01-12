@@ -75,32 +75,98 @@ const TestExecution = ({ config }) => {
             body: config.curl.data ? JSON.parse(JSON.stringify(config.curl.data)) : undefined
         };
 
-        // Add non-encoded headers first
-        Object.entries(config.curl.headers).forEach(([key, value]) => {
+        // First, copy all original headers (both regular and encoded)
+        Object.entries(config.curl.headers || {}).forEach(([key, value]) => {
             if (!config.curl.encodedHeaders?.[key]) {
+                // Regular headers
                 request.headers[key] = value;
             }
         });
 
-        // Initialize encoded headers state with empty objects
+        // Initialize encoded headers state with original decoded values
         const encodedHeadersState = {};
-        Object.keys(config.curl.encodedHeaders || {}).forEach(headerKey => {
-            encodedHeadersState[headerKey] = {};
+        Object.entries(config.curl.encodedHeaders || {}).forEach(([headerKey, headerData]) => {
+            // Start with the original decoded structure
+            encodedHeadersState[headerKey] = JSON.parse(JSON.stringify(headerData.decoded));
         });
 
-        // Helper function to get nested MongoDB field value
-        const getValue = (obj, path) => {
-            const value = path.split('.').reduce((curr, key) => curr?.[key], obj);
-            console.log(`Getting value for path ${path}:`, value);
-            return value;
+        // Helper function for type casting
+        const castValue = (value, curlField) => {
+            const castingConfig = config.fieldMappings.typeCastings?.[curlField];
+            if (!castingConfig?.type) return value;
+
+            try {
+                switch (castingConfig.type) {
+                    case 'string':
+                        return String(value);
+                    case 'number':
+                        if (castingConfig.format === 'integer') {
+                            return parseInt(value, 10);
+                        } else if (castingConfig.format === 'float') {
+                            return parseFloat(value);
+                        } else if (castingConfig.format === 'string') {
+                            return String(Number(value));
+                        }
+                        return Number(value);
+                    case 'boolean':
+                        if (typeof value === 'string') {
+                            return value.toLowerCase() === 'true';
+                        }
+                        return Boolean(value);
+                    case 'date':
+                        const date = new Date(value);
+                        if (castingConfig.format === 'iso') {
+                            return date.toISOString();
+                        } else if (castingConfig.format === 'timestamp') {
+                            return date.getTime();
+                        } else if (castingConfig.format === 'unix') {
+                            return Math.floor(date.getTime() / 1000);
+                        }
+                        return date.toISOString();
+                    case 'array':
+                        return Array.isArray(value) ? value : [value];
+                    case 'object':
+                        return typeof value === 'object' ? value : JSON.parse(value);
+                    default:
+                        return value;
+                }
+            } catch (err) {
+                console.error(`Error casting value for ${curlField}:`, err);
+                return value;
+            }
         };
 
-        // Apply mappings
-        Object.entries(config.fieldMappings).forEach(([curlField, mongoField]) => {
+        // Helper function to get nested MongoDB field value with type casting
+        const getValue = (obj, mongoPath, curlField) => {
+            if (!mongoPath || typeof mongoPath !== 'string') {
+                console.error('Invalid MongoDB path:', mongoPath);
+                return undefined;
+            }
+            try {
+                const value = mongoPath.split('.').reduce((curr, key) => {
+                    if (curr === undefined || curr === null) return undefined;
+                    return curr[key];
+                }, obj);
+
+                // Immediately cast the value based on the CURL field type
+                return castValue(value, curlField);
+            } catch (err) {
+                console.error(`Error getting value for path ${mongoPath}:`, err);
+                return undefined;
+            }
+        };
+
+        // Apply mappings where specified
+        Object.entries(config.fieldMappings.fieldMappings || {}).forEach(([curlField, mongoField]) => {
             console.log(`Processing mapping: ${curlField} -> ${mongoField}`);
             
             const [section, headerKey, ...jsonPath] = curlField.split('.');
-            const value = getValue(document, mongoField);
+            const value = getValue(document, mongoField, curlField);
+
+            if (value === undefined) {
+                console.warn(`Could not find value for MongoDB path: ${mongoField}`);
+                return;
+            }
 
             switch (section) {
                 case 'path':
@@ -114,13 +180,8 @@ const TestExecution = ({ config }) => {
 
                 case 'header':
                     if (config.curl.encodedHeaders?.[headerKey]) {
-                        // Set value in encoded header structure
-                        if (!encodedHeadersState[headerKey]) {
-                            encodedHeadersState[headerKey] = {};
-                        }
-                        
+                        // Handle encoded headers
                         let current = encodedHeadersState[headerKey];
-                        // Handle nested paths in encoded JSON
                         for (let i = 0; i < jsonPath.length - 1; i++) {
                             if (!current[jsonPath[i]]) {
                                 current[jsonPath[i]] = {};
@@ -128,8 +189,6 @@ const TestExecution = ({ config }) => {
                             current = current[jsonPath[i]];
                         }
                         current[jsonPath[jsonPath.length - 1]] = value;
-                        
-                        console.log(`Updated encoded header ${headerKey}:`, encodedHeadersState[headerKey]);
                     } else {
                         // Regular header
                         request.headers[headerKey] = value;
@@ -153,18 +212,10 @@ const TestExecution = ({ config }) => {
             }
         });
 
-        // Encode and set headers
+        // Encode and set all headers (both mapped and unmapped)
         Object.entries(encodedHeadersState).forEach(([headerKey, headerData]) => {
             console.log(`Encoding header ${headerKey}:`, headerData);
-            if (Object.keys(headerData).length > 0) {
-                console.log(request.headers);
-                request.headers[headerKey] = btoa(JSON.stringify(headerData));
-                console.log(request.headers);
-            } else {
-                // If no mappings were applied, use original structure but with empty values
-                const originalStructure = config.curl.encodedHeaders[headerKey].decoded;
-                request.headers[headerKey] = btoa(JSON.stringify(originalStructure));
-            }
+            request.headers[headerKey] = btoa(JSON.stringify(headerData));
         });
 
         // Set final URL
@@ -177,7 +228,6 @@ const TestExecution = ({ config }) => {
         throw new Error(`Failed to build request: ${err.message}`);
     }
 };
-
   const executeRequest = async (request) => {
     console.log('Executing request:', request);
     return await window.apiTester.sendRequest(request);
