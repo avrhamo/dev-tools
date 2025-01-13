@@ -29,7 +29,21 @@ const FieldMapping = ({ curlData, connection, onMappingComplete }) => {
         try {
             const fields = new Set();
     
-            // Extract path parameters
+            // First check URL for path parameters using all three formats
+            if (curlData.url) {
+                const urlParts = curlData.url.split('/');
+                urlParts.forEach(part => {
+                    // Check for {param}, [param], or :param formats
+                    const paramMatches = part.match(/(?:\{(.*?)\})|(?:\[(.*?)\])|(?:\:([\w-]+))/);
+                    if (paramMatches) {
+                        // Use the first non-undefined capture group
+                        const paramName = paramMatches[1] || paramMatches[2] || paramMatches[3];
+                        fields.add(`path.${paramName}`);
+                    }
+                });
+            }
+    
+            // Also include any explicitly defined path parameters
             if (curlData.pathParams && curlData.pathParams.length > 0) {
                 curlData.pathParams.forEach(param => {
                     fields.add(`path.${param.name}`);
@@ -52,11 +66,13 @@ const FieldMapping = ({ curlData, connection, onMappingComplete }) => {
             if (curlData.headers) {
                 Object.entries(curlData.headers).forEach(([headerKey, headerValue]) => {
                     if (curlData.encodedHeaders && curlData.encodedHeaders[headerKey]) {
+                        // Handle encoded headers - extract JSON structure
                         const headerFields = extractFields(curlData.encodedHeaders[headerKey].decoded);
                         headerFields.forEach(field => {
                             fields.add(`header.${headerKey}.${field}`);
                         });
                     } else {
+                        // Regular headers
                         fields.add(`header.${headerKey}`);
                     }
                 });
@@ -117,25 +133,29 @@ const FieldMapping = ({ curlData, connection, onMappingComplete }) => {
                 body: curlData.data ? JSON.parse(JSON.stringify(curlData.data)) : undefined
             };
 
-            // Add mapping indicators with type casting
             Object.entries(mappings).forEach(([curlField, mongoField]) => {
-                const castingConfig = castings[curlField];
-                const placeholder = castingConfig 
-                    ? `{${mongoField}:${castingConfig.type}${castingConfig.format ? `:${castingConfig.format}` : ''}}`
-                    : `{${mongoField}}`;
-
                 const [section, ...parts] = curlField.split('.');
                 const fieldPath = parts.join('.');
 
                 if (section === 'path') {
-                    const paramPattern = new RegExp(`[:\{\[]${fieldPath}[\}\]]?`);
-                    urlString = urlString.replace(paramPattern, placeholder);
+                    // Replace path parameter with mapping indicator
+                    const paramName = fieldPath;
+                    const castingInfo = castings[curlField] ? 
+                        `:${castings[curlField].type}${castings[curlField].format ? `:${castings[curlField].format}` : ''}` : '';
+                    urlString = urlString.replace(
+                        new RegExp(`(:|\\{|\\[)${paramName}(\\}|\\])?`),
+                        `{${mongoField}${castingInfo}}`
+                    );
                     previewData.url = urlString;
                 } else if (section === 'url') {
+                    // Handle URL query parameters
                     const url = new URL(previewData.url);
-                    url.searchParams.set(fieldPath, placeholder);
+                    const castingInfo = castings[curlField] ? 
+                        `:${castings[curlField].type}${castings[curlField].format ? `:${castings[curlField].format}` : ''}` : '';
+                    url.searchParams.set(fieldPath, `{${mongoField}${castingInfo}}`);
                     previewData.url = url.toString();
                 } else if (section === 'header') {
+                    // Handle headers
                     const headerKey = parts[0];
                     if (curlData.encodedHeaders && curlData.encodedHeaders[headerKey]) {
                         // Handle encoded headers
@@ -144,20 +164,26 @@ const FieldMapping = ({ curlData, connection, onMappingComplete }) => {
                         const remainingParts = parts.slice(1);
                         remainingParts.forEach((part, index) => {
                             if (index === remainingParts.length - 1) {
-                                current[part] = placeholder;
+                                const castingInfo = castings[curlField] ? 
+                                    `:${castings[curlField].type}${castings[curlField].format ? `:${castings[curlField].format}` : ''}` : '';
+                                current[part] = `{${mongoField}${castingInfo}}`;
                             } else {
                                 current = current[part];
                             }
                         });
                         previewData.headers[headerKey] = btoa(JSON.stringify(headerData));
                     } else {
-                        previewData.headers[fieldPath] = placeholder;
+                        previewData.headers[fieldPath] = `{${mongoField}}`;
                     }
-                } else if (section === 'body' && previewData.body) {
+                } else if (section === 'body') {
+                    // Handle body fields
                     let current = previewData.body;
-                    parts.forEach((part, index) => {
-                        if (index === parts.length - 1) {
-                            current[part] = placeholder;
+                    const pathParts = fieldPath.split('.');
+                    pathParts.forEach((part, index) => {
+                        if (index === pathParts.length - 1) {
+                            const castingInfo = castings[curlField] ? 
+                                `:${castings[curlField].type}${castings[curlField].format ? `:${castings[curlField].format}` : ''}` : '';
+                            current[part] = `{${mongoField}${castingInfo}}`;
                         } else {
                             if (!current[part]) current[part] = {};
                             current = current[part];
@@ -170,7 +196,7 @@ const FieldMapping = ({ curlData, connection, onMappingComplete }) => {
         } catch (err) {
             setError('Failed to generate preview: ' + err.message);
         }
-    }, [mappings, castings, curlData]);
+    }, [mappings, curlData]);
 
     const handleMapping = (curlField, mongoField) => {
         setMappings(prev => ({
@@ -179,14 +205,16 @@ const FieldMapping = ({ curlData, connection, onMappingComplete }) => {
         }));
         
         // Reset casting when mapping changes
-        setCastings(prev => {
-            const newCastings = { ...prev };
-            delete newCastings[curlField];
-            return newCastings;
-        });
+        if (mongoField === '') {
+            setCastings(prev => {
+                const newCastings = { ...prev };
+                delete newCastings[curlField];
+                return newCastings;
+            });
+        }
     };
 
-    const handleCastingUpdate = (curlField, castingConfig) => {
+    const handleUpdateCasting = (curlField, castingConfig) => {
         setCastings(prev => ({
             ...prev,
             [curlField]: {
@@ -197,9 +225,17 @@ const FieldMapping = ({ curlData, connection, onMappingComplete }) => {
     };
 
     const handleContinue = () => {
+        // Filter out mappings with no castings or incomplete castings
+        const validCastings = Object.entries(castings).reduce((acc, [field, casting]) => {
+            if (casting?.type) {
+                acc[field] = casting;
+            }
+            return acc;
+        }, {});
+
         onMappingComplete({
             fieldMappings: mappings,
-            typeCastings: castings
+            typeCastings: validCastings
         });
     };
 
@@ -240,7 +276,8 @@ const FieldMapping = ({ curlData, connection, onMappingComplete }) => {
                     {Object.keys(mappings).length > 0 && (
                         <FieldTypeCasting 
                             mappings={mappings}
-                            onUpdateCasting={handleCastingUpdate}
+                            castings={castings}
+                            onUpdateCasting={handleUpdateCasting}
                         />
                     )}
                 </div>
