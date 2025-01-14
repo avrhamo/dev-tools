@@ -1,4 +1,7 @@
 {
-    "numberNumeric": 123456789,
-    "NumberString": "123456789"
+    {
+        "numberNumeric": 123456789,
+        "NumberString": "123456789"
+    },
+    {}
 }
