@@ -1,33 +1,47 @@
 {
-    "name": "dev-tools",
-    "version": "1.0.0",
-    "main": "src/main.js",
-    "scripts": {
-        "dev": "concurrently \"vite\" \"electron .\"",
-        "build": "vite build",
-        "preview": "vite preview",
-        "electron:build": "electron-builder"
-    },
-    "dependencies": {
-        "@monaco-editor/react": "^4.6.0",
-        "curl-parser": "^0.0.2",
-        "js-yaml": "^4.1.0",
-        "lucide-react": "^0.469.0",
-        "monaco-editor": "^0.52.2",
-        "mongodb": "^6.12.0",
-        "react": "^18.2.0",
-        "react-dom": "^18.2.0",
-        "react-router-dom": "^6.x"
-    },
-    "devDependencies": {
-        "@vitejs/plugin-react": "^4.x",
-        "autoprefixer": "^10.4.20",
-        "concurrently": "^8.x",
-        "electron": "^25.x",
-        "electron-builder": "^24.x",
-        "postcss": "^8.4.49",
-        "tailwindcss": "^3.4.17",
-        "vite": "^4.x",
-        "wait-on": "^7.x"
-    }
+  "name": "dev-tools",
+  "version": "1.0.0",
+  "description": "Developer Tools Suite",
+  "main": "dist/electron.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview",
+    "electron:dev": "cross-env NODE_ENV=development concurrently \"npm run dev\" \"tsc -p tsconfig.electron.json -w\" \"wait-on dist/main/electron.js && electron .\"",
+    "electron:build": "tsc -p tsconfig.electron.json && cross-env NODE_ENV=production npm run build && electron-builder",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@monaco-editor/react": "^4.6.0",
+    "electron": "^28.1.0",
+    "js-yaml": "^4.1.0",
+    "lucide-react": "^0.263.1",
+    "mongodb": "^6.3.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.21.1"
+  },
+  "devDependencies": {
+    "@types/electron": "^1.4.38",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^20.17.14",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.16",
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
+    "electron-builder": "^24.9.1",
+    "eslint": "^8.56.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.5",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.10",
+    "wait-on": "^7.2.0"
+  }
 }

@@ -1,0 +1,23 @@
+{
+    "compilerOptions": {
+      "target": "ES2020",
+      "module": "CommonJS",
+      "allowJs": true,
+      "skipLibCheck": true,
+      "esModuleInterop": true,
+      "noImplicitAny": true,
+      "sourceMap": true,
+      "baseUrl": ".",
+      "outDir": "dist",
+      "moduleResolution": "node",
+      "resolveJsonModule": true,
+      "strict": true,
+      "forceConsistentCasingInFileNames": true,
+      "paths": {
+        "*": ["node_modules/*"]
+      },
+      "types": ["electron", "node"]
+    },
+    "include": ["src/main/**/*"],
+    "exclude": ["node_modules"]
+  }
